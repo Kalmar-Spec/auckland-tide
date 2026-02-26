@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Auckland Tides</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ocean-deep: #0a1628;
+    --ocean-mid: #0d2244;
+    --ocean-teal: #1a4a6e;
+    --wave-blue: #2d7dd2;
+    --foam: #7ec8e3;
+    --gold: #f5c842;
+    --sand: #e8d5a3;
+    --text: #cce8f4;
+    --muted: #7aaccf;
+  }
+
+  body {
+    font-family: 'Fira Code', monospace;
+    background: var(--ocean-deep);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Animated ocean background */
+  .ocean-bg {
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 20% 50%, #0d3a5e 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, #0a2a4a 0%, transparent 50%),
+      linear-gradient(180deg, #06111f 0%, #0a1e35 40%, #0d2a45 100%);
+    z-index: 0;
+  }
+
+  .stars {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 40%;
+    z-index: 1;
+    background-image: 
+      radial-gradient(1px 1px at 20% 15%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 55% 8%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 75% 25%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 35% 30%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 88% 12%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 10% 35%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 65% 18%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 45% 5%, rgba(255,255,255,0.7) 0%, transparent 100%);
+  }
+
+  /* Animated waves */
+  .waves {
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    z-index: 1;
+    height: 35%;
+  }
+
+  .wave {
+    position: absolute;
+    bottom: 0;
+    left: -50%;
+    width: 200%;
+    border-radius: 50% 50% 0 0;
+    animation: waveMove linear infinite;
+  }
+
+  .wave1 {
+    height: 70px;
+    background: rgba(29, 78, 128, 0.35);
+    animation-duration: 8s;
+    bottom: 10px;
+  }
+  .wave2 {
+    height: 55px;
+    background: rgba(45, 125, 210, 0.2);
+    animation-duration: 11s;
+    animation-delay: -3s;
+    bottom: 5px;
+  }
+  .wave3 {
+    height: 45px;
+    background: rgba(126, 200, 227, 0.12);
+    animation-duration: 6s;
+    animation-delay: -5s;
+    bottom: 0;
+  }
+
+  @keyframes waveMove {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(25%); }
+    100% { transform: translateX(0); }
+  }
+
+  /* Main widget */
+  .widget {
+    position: relative;
+    z-index: 10;
+    width: min(380px, 94vw);
+    padding: 28px 24px 24px;
+    background: linear-gradient(160deg, rgba(13,34,68,0.92) 0%, rgba(10,22,40,0.95) 100%);
+    border: 1px solid rgba(126,200,227,0.18);
+    border-radius: 24px;
+    backdrop-filter: blur(12px);
+    box-shadow: 
+      0 0 0 1px rgba(126,200,227,0.05),
+      0 20px 60px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(126,200,227,0.1);
+    animation: fadeIn 0.8s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .location {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .location-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+
+  .location-sub {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .date-time {
+    text-align: right;
+  }
+
+  .current-time {
+    font-size: 22px;
+    font-weight: 300;
+    color: #fff;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+
+  .current-date {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+    letter-spacing: 1px;
+  }
+
+  /* Tide gauge SVG */
+  .gauge-wrap {
+    position: relative;
+    margin: 8px 0 20px;
+  }
+
+  .tide-svg {
+    width: 100%;
+    height: 90px;
+    overflow: visible;
+  }
+
+  /* Current tide highlight */
+  .current-tide-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(45,125,210,0.12);
+    border: 1px solid rgba(45,125,210,0.25);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+
+  .tide-icon {
+    font-size: 28px;
+    line-height: 1;
+  }
+
+  .current-info { flex: 1; }
+
+  .current-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .current-status {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: #fff;
+    font-style: italic;
+  }
+
+  .current-height {
+    font-size: 11px;
+    color: var(--foam);
+    margin-top: 2px;
+  }
+
+  .next-info {
+    text-align: right;
+  }
+
+  .next-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .next-time {
+    font-size: 18px;
+    color: var(--gold);
+    font-weight: 400;
+  }
+
+  .next-type {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* Tide list */
+  .tide-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .tide-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 10px;
+    transition: background 0.2s;
+  }
+
+  .tide-item.is-past {
+    opacity: 0.4;
+  }
+
+  .tide-item.is-next {
+    background: rgba(245,200,66,0.08);
+    border: 1px solid rgba(245,200,66,0.15);
+  }
+
+  .tide-item.is-next .tide-time { color: var(--gold); }
+  .tide-item.is-next .tide-kind { color: var(--gold); }
+
+  .tide-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .dot-high { background: var(--foam); box-shadow: 0 0 6px var(--foam); }
+  .dot-low { background: var(--wave-blue); }
+
+  .tide-time {
+    font-size: 15px;
+    color: var(--text);
+    width: 64px;
+    flex-shrink: 0;
+  }
+
+  .tide-kind {
+    font-size: 11px;
+    color: var(--muted);
+    flex: 1;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .tide-height {
+    font-size: 14px;
+    color: var(--text);
+    text-align: right;
+  }
+
+  .tide-height span {
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* Moon phase */
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(126,200,227,0.08);
+  }
+
+  .moon-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .moon-icon { font-size: 16px; }
+
+  .moon-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .updated {
+    font-size: 10px;
+    color: rgba(122,172,207,0.4);
+    letter-spacing: 0.5px;
+  }
+
+  .api-hint {
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: rgba(245,200,66,0.05);
+    border: 1px solid rgba(245,200,66,0.12);
+    border-radius: 10px;
+    font-size: 10px;
+    color: rgba(245,200,66,0.6);
+    letter-spacing: 0.5px;
+    line-height: 1.5;
+  }
+
+  .api-hint strong { color: rgba(245,200,66,0.9); }
+
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10,22,40,0.7);
+    border-radius: 24px;
+    z-index: 20;
+  }
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid rgba(126,200,227,0.2);
+    border-top-color: var(--foam);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="ocean-bg"></div>
+<div class="stars"></div>
+<div class="waves">
+  <div class="wave wave1"></div>
+  <div class="wave wave2"></div>
+  <div class="wave wave3"></div>
+</div>
+
+<div class="widget" id="widget">
+  <div class="loading-overlay" id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="header">
+    <div class="location">
+      <div class="location-name">Auckland</div>
+      <div class="location-sub">Auckland · New Zealand</div>
+    </div>
+    <div class="date-time">
+      <div class="current-time" id="clock">--:--</div>
+      <div class="current-date" id="dateDisplay">---</div>
+    </div>
+  </div>
+
+  <div class="gauge-wrap">
+    <svg class="tide-svg" id="tideSvg" viewBox="0 0 332 90"></svg>
+  </div>
+
+  <div class="current-tide-box">
+    <div class="tide-icon" id="tideIcon">🌊</div>
+    <div class="current-info">
+      <div class="current-label">Current Tide</div>
+      <div class="current-status" id="tideStatus">Loading…</div>
+      <div class="current-height" id="tideHeight"></div>
+    </div>
+    <div class="next-info">
+      <div class="next-label">Next</div>
+      <div class="next-time" id="nextTime">--:--</div>
+      <div class="next-type" id="nextType">---</div>
+    </div>
+  </div>
+
+  <div class="tide-list" id="tideList"></div>
+
+  <div class="footer">
+    <div class="moon-info">
+      <div class="moon-icon" id="moonIcon">🌕</div>
+      <div class="moon-label" id="moonPhase">Moon phase</div>
+    </div>
+    <div class="updated" id="updatedAt">Calculating tides…</div>
+  </div>
+
+  <div class="api-hint" id="apiHint">
+    📋 Data: <strong>LINZ</strong> (Land Information New Zealand) · Crown Copyright · Valid for 2026
+  </div>
+</div>
+
+<script>
+// ─── Official LINZ tide data for Auckland 2026 ────────────────────────────────
+// Source: Land Information New Zealand (Crown Copyright)
+// https://static.charts.linz.govt.nz/tide-tables/maj-ports/csv/Auckland%202026.csv
+// Times are NZ Local Time (NZDT during daylight saving, NZST otherwise)
+// Format: "day,month,time1,ht1,time2,ht2,time3,ht3,time4,ht4"
+// Heights alternate low/high. First entry determines if day starts high or low.
+// We parse each row into individual tide events with actual dates.
+
+const LINZ_RAW = `1,1,05:47,3.1,11:51,0.8,18:06,3.1,,
+2,1,00:20,0.6,06:50,3.2,12:52,0.8,19:09,3.2
+3,1,01:19,0.5,07:48,3.3,13:50,0.7,20:10,3.2
+4,1,02:15,0.4,08:43,3.5,14:46,0.6,21:07,3.3
+5,1,03:08,0.4,09:35,3.5,15:41,0.6,22:01,3.3
+6,1,03:59,0.4,10:26,3.5,16:34,0.6,22:53,3.3
+7,1,04:48,0.4,11:15,3.5,17:25,0.6,23:41,3.3
+8,1,05:35,0.5,12:03,3.4,18:14,0.7,,
+9,1,00:29,3.2,06:23,0.7,12:51,3.3,19:01,0.7
+10,1,01:16,3.1,07:11,0.8,13:38,3.1,19:47,0.8
+11,1,02:04,3.0,08:02,1.0,14:25,3.0,20:35,0.9
+12,1,02:56,2.8,08:55,1.1,15:13,2.9,21:24,1.0
+13,1,03:51,2.8,09:51,1.2,16:03,2.8,22:17,1.1
+14,1,04:50,2.7,10:47,1.2,16:56,2.7,23:12,1.1
+15,1,05:47,2.8,11:41,1.2,17:50,2.7,,
+16,1,00:06,1.1,06:40,2.8,12:31,1.2,18:44,2.7
+17,1,00:55,1.0,07:28,2.9,13:18,1.1,19:35,2.8
+18,1,01:41,0.9,08:12,3.0,14:02,1.0,20:22,2.9
+19,1,02:23,0.8,08:53,3.1,14:45,1.0,21:06,2.9
+20,1,03:03,0.8,09:33,3.2,15:27,0.9,21:47,3.0
+21,1,03:42,0.7,10:12,3.2,16:10,0.8,22:27,3.1
+22,1,04:21,0.7,10:51,3.3,16:52,0.7,23:08,3.1
+23,1,05:02,0.7,11:32,3.3,17:35,0.7,23:49,3.1
+24,1,05:45,0.7,12:15,3.3,18:19,0.7,,
+25,1,00:32,3.1,06:30,0.8,13:00,3.2,19:05,0.7
+26,1,01:20,3.1,07:21,0.8,13:48,3.2,19:55,0.7
+27,1,02:12,3.0,08:18,0.9,14:40,3.1,20:50,0.7
+28,1,03:12,3.0,09:22,1.0,15:39,3.1,21:51,0.8
+29,1,04:20,3.0,10:29,1.0,16:43,3.0,22:57,0.8
+30,1,05:29,3.1,11:35,0.9,17:50,3.0,,
+31,1,00:03,0.7,06:33,3.2,12:37,0.9,18:56,3.1
+1,2,01:04,0.6,07:32,3.3,13:37,0.8,19:57,3.2
+2,2,02:00,0.5,08:26,3.4,14:32,0.7,20:53,3.3
+3,2,02:52,0.5,09:17,3.5,15:24,0.6,21:44,3.3
+4,2,03:40,0.5,10:05,3.5,16:13,0.6,22:32,3.3
+5,2,04:26,0.5,10:51,3.4,16:59,0.6,23:17,3.3
+6,2,05:09,0.6,11:35,3.4,17:42,0.7,,
+7,2,00:00,3.2,05:52,0.7,12:18,3.2,18:24,0.8
+8,2,00:42,3.1,06:35,0.9,13:01,3.1,19:05,0.9
+9,2,01:26,3.0,07:20,1.0,13:43,3.0,19:47,1.0
+10,2,02:12,2.9,08:10,1.1,14:27,2.9,20:33,1.1
+11,2,03:05,2.8,09:04,1.2,15:16,2.8,21:26,1.1
+12,2,04:04,2.7,10:02,1.3,16:09,2.7,22:25,1.2
+13,2,05:05,2.7,10:59,1.3,17:08,2.7,23:25,1.2
+14,2,06:02,2.8,11:54,1.2,18:08,2.7,,
+15,2,00:20,1.1,06:53,2.9,12:45,1.2,19:03,2.8
+16,2,01:09,1.0,07:39,3.0,13:32,1.1,19:53,2.9
+17,2,01:54,0.9,08:22,3.1,14:17,0.9,20:38,3.0
+18,2,02:35,0.8,09:03,3.2,15:00,0.8,21:21,3.1
+19,2,03:16,0.7,09:43,3.3,15:43,0.7,22:02,3.2
+20,2,03:58,0.6,10:25,3.4,16:27,0.6,22:44,3.3
+21,2,04:40,0.6,11:08,3.4,17:10,0.6,23:27,3.3
+22,2,05:25,0.6,11:52,3.4,17:56,0.6,,
+23,2,00:13,3.3,06:12,0.7,12:39,3.3,18:43,0.6
+24,2,01:01,3.2,07:04,0.8,13:29,3.2,19:34,0.7
+25,2,01:55,3.1,08:03,0.9,14:23,3.1,20:30,0.8
+26,2,02:57,3.1,09:08,1.0,15:24,3.0,21:34,0.8
+27,2,04:05,3.0,10:16,1.0,16:30,3.0,22:42,0.9
+28,2,05:14,3.1,11:22,1.0,17:39,3.0,23:49,0.8
+1,3,06:17,3.1,12:25,0.9,18:44,3.0,,
+2,3,00:50,0.8,07:15,3.2,13:22,0.8,19:43,3.1
+3,3,01:44,0.7,08:07,3.3,14:15,0.7,20:35,3.2
+4,3,02:33,0.6,08:55,3.4,15:03,0.7,21:23,3.3
+5,3,03:18,0.6,09:40,3.4,15:47,0.7,22:07,3.3
+6,3,04:00,0.6,10:24,3.4,16:29,0.7,22:49,3.3
+7,3,04:40,0.7,11:05,3.3,17:08,0.7,23:29,3.2
+8,3,05:20,0.8,11:45,3.2,17:46,0.8,,
+9,3,00:08,3.1,06:00,0.9,12:24,3.1,18:23,0.9
+10,3,00:49,3.0,06:43,1.0,13:04,3.0,19:03,1.0
+11,3,01:32,2.9,07:30,1.1,13:47,2.9,19:47,1.1
+12,3,02:22,2.8,08:22,1.2,14:33,2.8,20:39,1.2
+13,3,03:19,2.8,09:19,1.3,15:26,2.7,21:38,1.2
+14,3,04:20,2.7,10:18,1.3,16:26,2.7,22:42,1.2
+15,3,05:19,2.8,11:15,1.2,17:28,2.7,23:41,1.1
+16,3,06:12,2.9,12:07,1.1,18:26,2.8,,
+17,3,00:33,1.0,07:00,3.0,12:57,1.0,19:18,2.9
+18,3,01:20,0.9,07:45,3.1,13:44,0.9,20:06,3.1
+19,3,02:05,0.8,08:28,3.3,14:29,0.7,20:52,3.2
+20,3,02:49,0.6,09:13,3.4,15:15,0.6,21:36,3.4
+21,3,03:33,0.6,09:58,3.4,16:01,0.5,22:21,3.4
+22,3,04:18,0.6,10:44,3.5,16:47,0.5,23:07,3.5
+23,3,05:06,0.6,11:32,3.4,17:34,0.5,23:55,3.4
+24,3,05:57,0.7,12:22,3.3,18:23,0.6,,
+25,3,00:47,3.3,06:52,0.8,13:15,3.2,19:17,0.7
+26,3,01:43,3.2,07:53,0.9,14:12,3.1,20:15,0.8
+27,3,02:46,3.1,08:59,1.0,15:14,3.0,21:21,0.9
+28,3,03:52,3.1,10:06,1.0,16:20,3.0,22:29,0.9
+29,3,04:58,3.1,11:10,1.0,17:26,3.0,23:35,0.9
+30,3,05:58,3.1,12:09,0.9,18:28,3.0,,
+31,3,00:33,0.9,06:52,3.2,13:03,0.9,19:24,3.1
+1,4,01:24,0.8,07:42,3.2,13:52,0.8,20:14,3.2
+2,4,02:10,0.8,08:29,3.3,14:36,0.7,20:59,3.3
+3,4,02:52,0.7,09:12,3.3,15:18,0.7,21:41,3.3
+4,4,03:32,0.8,09:54,3.2,15:56,0.7,22:20,3.3
+5,4,03:11,0.8,09:33,3.2,15:33,0.8,21:59,3.2
+6,4,03:49,0.9,10:12,3.1,16:10,0.8,22:37,3.1
+7,4,04:29,1.0,10:51,3.0,16:47,0.9,23:16,3.1
+8,4,05:11,1.1,11:31,2.9,17:26,1.0,23:58,3.0
+9,4,05:57,1.1,12:13,2.8,18:09,1.1,,
+10,4,00:46,2.9,06:47,1.2,12:58,2.8,18:59,1.2
+11,4,01:39,2.8,07:42,1.2,13:49,2.7,19:56,1.2
+12,4,02:36,2.8,08:38,1.2,14:46,2.7,20:59,1.2
+13,4,03:32,2.8,09:34,1.2,15:46,2.8,21:59,1.1
+14,4,04:26,2.9,10:28,1.1,16:46,2.9,22:54,1.0
+15,4,05:16,3.0,11:19,0.9,17:41,3.0,23:45,0.9
+16,4,06:05,3.2,12:09,0.8,18:33,3.2,,
+17,4,00:33,0.8,06:53,3.3,12:58,0.6,19:22,3.3
+18,4,01:21,0.6,07:42,3.4,13:47,0.5,20:11,3.5
+19,4,02:09,0.6,08:32,3.5,14:36,0.4,20:59,3.5
+20,4,02:58,0.6,09:22,3.5,15:25,0.4,21:49,3.5
+21,4,03:50,0.6,10:14,3.4,16:15,0.4,22:40,3.5
+22,4,04:45,0.7,11:08,3.3,17:07,0.5,23:34,3.4
+23,4,05:43,0.8,12:03,3.2,18:02,0.7,,
+24,4,00:32,3.3,06:44,0.9,13:01,3.1,19:02,0.8
+25,4,01:33,3.2,07:48,0.9,14:02,3.0,20:07,0.9
+26,4,02:35,3.1,08:51,1.0,15:05,3.0,21:13,1.0
+27,4,03:36,3.1,09:51,0.9,16:08,3.0,22:15,1.0
+28,4,04:32,3.1,10:46,0.9,17:07,3.0,23:10,0.9
+29,4,05:25,3.1,11:37,0.9,18:00,3.1,23:59,0.9
+30,4,06:13,3.1,12:24,0.8,18:48,3.2,,
+1,5,00:43,0.9,06:59,3.1,13:07,0.8,19:32,3.2
+2,5,01:24,0.9,07:42,3.1,13:47,0.8,20:13,3.2
+3,5,02:04,0.9,08:24,3.1,14:25,0.8,20:52,3.2
+4,5,02:42,0.9,09:04,3.0,15:02,0.8,21:31,3.2
+5,5,03:21,1.0,09:43,3.0,15:39,0.9,22:09,3.1
+6,5,04:02,1.0,10:22,3.0,16:16,0.9,22:48,3.1
+7,5,04:44,1.1,11:02,2.9,16:56,1.0,23:30,3.0
+8,5,05:29,1.1,11:44,2.8,17:38,1.0,,
+9,5,00:15,2.9,06:18,1.1,12:28,2.8,18:26,1.1
+10,5,01:04,2.9,07:08,1.1,13:16,2.8,19:19,1.2
+11,5,01:55,2.9,08:01,1.1,14:09,2.8,20:18,1.2
+12,5,02:48,2.9,08:55,1.1,15:07,2.8,21:18,1.1
+13,5,03:41,3.0,09:49,1.0,16:07,2.9,22:16,1.0
+14,5,04:34,3.1,10:43,0.8,17:06,3.1,23:11,0.9
+15,5,05:27,3.2,11:36,0.7,18:02,3.2,,
+16,5,00:03,0.8,06:20,3.3,12:29,0.5,18:55,3.4
+17,5,00:55,0.7,07:14,3.4,13:22,0.4,19:48,3.5
+18,5,01:48,0.6,08:09,3.4,14:14,0.4,20:40,3.6
+19,5,02:41,0.6,09:04,3.4,15:06,0.4,21:32,3.6
+20,5,03:36,0.6,09:59,3.4,15:58,0.4,22:25,3.5
+21,5,04:33,0.6,10:54,3.3,16:51,0.5,23:20,3.5
+22,5,05:31,0.7,11:49,3.2,17:46,0.7,,
+23,5,00:16,3.4,06:30,0.8,12:45,3.1,18:45,0.8
+24,5,01:14,3.2,07:30,0.8,13:43,3.1,19:46,0.9
+25,5,02:11,3.2,08:28,0.9,14:42,3.0,20:49,1.0
+26,5,03:07,3.1,09:23,0.9,15:42,3.0,21:48,1.0
+27,5,04:01,3.0,10:16,0.9,16:39,3.0,22:41,1.0
+28,5,04:52,3.0,11:06,0.9,17:32,3.0,23:30,1.0
+29,5,05:41,3.0,11:53,0.9,18:20,3.1,,
+30,5,00:14,1.0,06:28,3.0,12:37,0.9,19:05,3.1
+31,5,00:56,1.0,07:13,3.0,13:18,0.9,19:47,3.1
+1,6,01:37,1.0,07:56,3.0,13:56,0.8,20:27,3.1
+2,6,02:16,1.0,08:37,3.0,14:34,0.8,21:05,3.1
+3,6,02:57,1.0,09:18,2.9,15:12,0.8,21:44,3.1
+4,6,03:38,1.0,09:58,2.9,15:50,0.9,22:23,3.1
+5,6,04:20,1.0,10:37,2.9,16:29,0.9,23:04,3.0
+6,6,05:04,1.0,11:18,2.9,17:11,1.0,23:46,3.0
+7,6,05:49,1.0,12:00,2.9,17:56,1.0,,
+8,6,00:31,3.0,06:36,1.0,12:46,2.9,18:46,1.0
+9,6,01:18,3.0,07:26,1.0,13:36,2.9,19:41,1.1
+10,6,02:08,3.0,08:18,0.9,14:32,2.9,20:41,1.0
+11,6,03:01,3.0,09:13,0.8,15:32,3.0,21:41,1.0
+12,6,03:57,3.1,10:10,0.7,16:35,3.1,22:41,0.9
+13,6,04:54,3.2,11:08,0.6,17:35,3.2,23:38,0.8
+14,6,05:54,3.2,12:05,0.5,18:33,3.4,,
+15,6,00:34,0.7,06:53,3.3,13:01,0.4,19:28,3.5
+16,6,01:30,0.6,07:51,3.4,13:55,0.3,20:22,3.6
+17,6,02:26,0.6,08:48,3.4,14:48,0.3,21:16,3.6
+18,6,03:22,0.6,09:43,3.4,15:41,0.4,22:09,3.6
+19,6,04:18,0.6,10:37,3.3,16:33,0.5,23:02,3.5
+20,6,05:13,0.6,11:30,3.3,17:26,0.6,23:55,3.4
+21,6,06:08,0.7,12:23,3.2,18:21,0.8,,
+22,6,00:48,3.3,07:02,0.8,13:17,3.1,19:18,0.9
+23,6,01:41,3.1,07:55,0.8,14:12,3.0,20:16,1.0
+24,6,02:33,3.0,08:47,0.9,15:09,2.9,21:13,1.1
+25,6,03:25,3.0,09:40,1.0,16:06,2.9,22:07,1.1
+26,6,04:16,2.9,10:31,1.0,17:00,2.9,22:58,1.1
+27,6,05:07,2.9,11:20,1.0,17:51,3.0,23:44,1.1
+28,6,05:57,2.8,12:07,0.9,18:37,3.0,,
+29,6,00:29,1.1,06:45,2.9,12:50,0.9,19:21,3.0
+30,6,01:11,1.0,07:30,2.9,13:31,0.9,20:02,3.1
+1,7,01:53,1.0,08:13,2.9,14:10,0.8,20:41,3.1
+2,7,02:34,1.0,08:54,2.9,14:48,0.8,21:20,3.1
+3,7,03:15,0.9,09:34,3.0,15:26,0.8,21:58,3.1
+4,7,03:56,0.9,10:13,3.0,16:05,0.8,22:37,3.1
+5,7,04:38,0.9,10:52,3.0,16:45,0.8,23:18,3.1
+6,7,05:21,0.9,11:33,3.0,17:29,0.9,,
+7,7,00:01,3.1,06:06,0.8,12:18,2.9,18:17,0.9
+8,7,00:46,3.1,06:53,0.8,13:07,2.9,19:10,1.0
+9,7,01:36,3.1,07:45,0.8,14:02,2.9,20:10,1.0
+10,7,02:29,3.0,08:42,0.8,15:04,3.0,21:14,1.0
+11,7,03:28,3.1,09:43,0.7,16:10,3.0,22:17,0.9
+12,7,04:30,3.1,10:45,0.6,17:15,3.2,23:19,0.8
+13,7,05:35,3.1,11:46,0.5,18:15,3.3,,
+14,7,00:18,0.7,06:37,3.2,12:44,0.4,19:12,3.4
+15,7,01:15,0.6,07:37,3.3,13:39,0.4,20:06,3.5
+16,7,02:11,0.5,08:33,3.4,14:31,0.3,20:58,3.6
+17,7,03:05,0.5,09:26,3.4,15:22,0.4,21:49,3.5
+18,7,03:58,0.5,10:17,3.4,16:12,0.5,22:39,3.5
+19,7,04:49,0.6,11:06,3.3,17:01,0.6,23:28,3.4
+20,7,05:38,0.6,11:55,3.2,17:51,0.7,,
+21,7,00:16,3.2,06:26,0.7,12:44,3.1,18:42,0.9
+22,7,01:05,3.1,07:14,0.8,13:35,2.9,19:37,1.0
+23,7,01:54,3.0,08:04,0.9,14:30,2.9,20:33,1.1
+24,7,02:45,2.8,08:57,1.0,15:28,2.8,21:29,1.2
+25,7,03:38,2.8,09:52,1.0,16:26,2.8,22:23,1.2
+26,7,04:32,2.7,10:47,1.0,17:20,2.8,23:14,1.1
+27,7,05:26,2.7,11:38,1.0,18:09,2.9,,
+28,7,00:01,1.1,06:18,2.8,12:24,0.9,18:54,3.0
+29,7,00:45,1.0,07:05,2.8,13:06,0.9,19:35,3.0
+30,7,01:28,1.0,07:49,2.9,13:45,0.8,20:14,3.1
+31,7,02:09,0.9,08:30,3.0,14:24,0.7,20:53,3.2
+1,8,02:50,0.8,09:09,3.0,15:01,0.7,21:31,3.2
+2,8,03:30,0.7,09:47,3.1,15:40,0.7,22:10,3.2
+3,8,04:11,0.7,10:27,3.1,16:21,0.7,22:51,3.2
+4,8,04:53,0.7,11:08,3.1,17:04,0.8,23:33,3.1
+5,8,05:38,0.7,11:53,3.0,17:52,0.8,,
+6,8,00:20,3.1,06:25,0.7,12:42,3.0,18:47,0.9
+7,8,01:10,3.1,07:18,0.7,13:39,3.0,19:48,1.0
+8,8,02:06,3.0,08:17,0.8,14:44,3.0,20:55,1.0
+9,8,03:08,3.0,09:22,0.7,15:53,3.0,22:01,0.9
+10,8,04:15,3.0,10:29,0.7,16:59,3.1,23:05,0.8
+11,8,05:22,3.1,11:32,0.6,18:00,3.3,,
+12,8,00:05,0.7,06:25,3.2,12:30,0.5,18:55,3.4
+13,8,01:01,0.6,07:23,3.3,13:23,0.4,19:48,3.5
+14,8,01:55,0.5,08:16,3.4,14:13,0.4,20:37,3.5
+15,8,02:45,0.5,09:06,3.4,15:01,0.4,21:25,3.5
+16,8,03:33,0.5,09:53,3.4,15:47,0.5,22:12,3.4
+17,8,04:19,0.5,10:38,3.3,16:32,0.6,22:57,3.3
+18,8,05:03,0.6,11:23,3.2,17:17,0.7,23:42,3.1
+19,8,05:46,0.7,12:08,3.0,18:04,0.9,,
+20,8,00:26,3.0,06:30,0.8,12:56,2.9,18:55,1.0
+21,8,01:13,2.9,07:17,1.0,13:49,2.8,19:50,1.1
+22,8,02:03,2.7,08:11,1.0,14:48,2.7,20:49,1.2
+23,8,02:57,2.7,09:10,1.1,15:48,2.7,21:47,1.2
+24,8,03:56,2.6,10:11,1.1,16:45,2.8,22:41,1.2
+25,8,04:54,2.7,11:07,1.0,17:36,2.8,23:31,1.1
+26,8,05:49,2.7,11:55,0.9,18:22,2.9,,
+27,8,00:16,1.0,06:37,2.8,12:38,0.8,19:04,3.0
+28,8,00:59,0.9,07:21,2.9,13:18,0.7,19:43,3.1
+29,8,01:40,0.8,08:02,3.0,13:57,0.7,20:22,3.2
+30,8,02:21,0.7,08:42,3.1,14:36,0.6,21:02,3.2
+31,8,03:03,0.6,09:22,3.2,15:16,0.6,21:43,3.3
+1,9,03:45,0.5,10:02,3.2,15:58,0.6,22:25,3.2
+2,9,04:28,0.5,10:46,3.2,16:44,0.7,23:10,3.2
+3,9,05:13,0.5,11:32,3.1,17:34,0.8,23:59,3.1
+4,9,06:02,0.6,12:24,3.1,18:30,0.9,,
+5,9,00:52,3.0,06:57,0.7,13:24,3.0,19:34,0.9
+6,9,01:51,2.9,08:00,0.8,14:31,3.0,20:42,0.9
+7,9,02:57,2.9,09:08,0.8,15:40,3.0,21:50,0.9
+8,9,04:06,2.9,10:16,0.7,16:44,3.1,22:53,0.8
+9,9,05:12,3.0,11:19,0.6,17:43,3.2,23:51,0.7
+10,9,06:12,3.1,12:15,0.5,18:37,3.3,,
+11,9,00:45,0.6,07:07,3.2,13:06,0.5,19:27,3.4
+12,9,01:35,0.5,07:57,3.3,13:53,0.4,20:14,3.4
+13,9,02:22,0.5,08:43,3.4,14:37,0.5,20:59,3.4
+14,9,03:05,0.5,09:27,3.3,15:20,0.5,21:43,3.3
+15,9,03:47,0.5,10:09,3.3,16:02,0.6,22:25,3.2
+16,9,04:27,0.6,10:50,3.2,16:44,0.8,23:07,3.0
+17,9,05:06,0.7,11:32,3.0,17:28,0.9,23:49,2.9
+18,9,05:47,0.8,12:18,2.9,18:16,1.0,,
+19,9,00:33,2.8,06:32,1.0,13:08,2.8,19:09,1.1
+20,9,01:22,2.7,07:24,1.1,14:05,2.7,20:07,1.2
+21,9,02:16,2.6,08:25,1.1,15:07,2.7,21:07,1.2
+22,9,03:16,2.6,09:29,1.1,16:05,2.7,22:03,1.1
+23,9,04:17,2.6,10:29,1.1,16:57,2.8,22:54,1.0
+24,9,05:14,2.7,11:20,1.0,17:44,2.9,23:41,0.9
+25,9,06:04,2.8,12:05,0.8,18:27,3.0,,
+26,9,00:26,0.8,06:49,3.0,12:47,0.7,19:08,3.1
+27,9,01:09,0.6,08:32,3.1,14:28,0.6,20:50,3.2
+28,9,02:52,0.5,09:14,3.2,15:10,0.5,21:33,3.3
+29,9,03:36,0.4,09:57,3.3,15:53,0.5,22:17,3.3
+30,9,04:20,0.4,10:41,3.3,16:39,0.5,23:03,3.3
+1,10,05:06,0.4,11:27,3.3,17:28,0.6,23:52,3.2
+2,10,05:53,0.4,12:17,3.2,18:21,0.7,,
+3,10,00:44,3.1,06:45,0.5,13:11,3.1,19:20,0.8
+4,10,01:40,3.0,07:42,0.7,14:12,3.1,20:25,0.9
+5,10,02:41,2.9,08:46,0.8,15:18,3.0,21:32,0.9
+6,10,03:47,2.9,09:55,0.8,16:24,3.0,22:38,0.8
+7,10,04:54,2.9,11:03,0.8,17:26,3.1,23:39,0.8
+8,10,05:58,3.0,12:03,0.7,18:23,3.1,,
+9,10,00:34,0.7,06:56,3.1,12:57,0.6,19:15,3.2
+10,10,01:25,0.6,07:48,3.2,13:46,0.6,20:03,3.2
+11,10,02:12,0.5,08:35,3.3,14:30,0.6,20:49,3.2
+12,10,02:56,0.5,09:19,3.3,15:12,0.6,21:32,3.2
+13,10,03:37,0.5,10:01,3.3,15:53,0.6,22:14,3.1
+14,10,04:15,0.6,10:41,3.2,16:33,0.7,22:55,3.1
+15,10,04:53,0.6,11:20,3.1,17:14,0.8,23:35,3.0
+16,10,05:31,0.7,12:01,3.0,17:56,0.9,,
+17,10,00:16,2.9,06:10,0.8,12:44,2.9,18:42,1.0
+18,10,00:59,2.8,06:54,0.9,13:31,2.8,19:33,1.1
+19,10,01:45,2.7,07:43,1.0,14:24,2.7,20:27,1.1
+20,10,02:36,2.6,08:40,1.1,15:21,2.7,21:24,1.1
+21,10,03:33,2.6,09:42,1.1,16:17,2.7,22:19,1.1
+22,10,04:33,2.6,10:43,1.1,17:10,2.8,23:12,1.0
+23,10,05:31,2.7,11:38,1.0,17:59,2.9,,
+24,10,00:02,0.9,06:25,2.8,12:27,0.9,18:46,3.0
+25,10,00:50,0.7,07:15,3.0,13:14,0.7,19:32,3.1
+26,10,01:37,0.6,08:02,3.2,13:59,0.6,20:19,3.2
+27,10,02:24,0.4,08:48,3.3,14:45,0.5,21:06,3.3
+28,10,03:11,0.3,09:35,3.4,15:33,0.5,21:55,3.3
+29,10,03:58,0.3,10:22,3.4,16:23,0.5,22:46,3.3
+30,10,04:47,0.3,11:12,3.4,17:15,0.6,23:38,3.2
+31,10,05:37,0.4,12:04,3.3,18:11,0.6,,
+1,11,00:32,3.2,06:30,0.5,13:00,3.3,19:11,0.7
+2,11,01:29,3.1,07:28,0.6,14:00,3.2,20:14,0.8
+3,11,02:29,3.0,08:31,0.8,15:02,3.1,21:17,0.8
+4,11,03:32,2.9,09:38,0.8,16:03,3.1,22:19,0.8
+5,11,04:36,2.9,10:43,0.8,17:02,3.1,23:17,0.8
+6,11,05:38,3.0,11:42,0.8,17:57,3.1,,
+7,11,00:11,0.7,06:34,3.0,12:35,0.8,18:48,3.1
+8,11,01:01,0.7,07:25,3.1,13:22,0.7,19:37,3.1
+9,11,01:47,0.6,08:12,3.2,14:06,0.7,20:22,3.1
+10,11,02:29,0.6,08:55,3.2,14:48,0.7,21:06,3.1
+11,11,03:09,0.6,09:36,3.2,15:28,0.8,21:48,3.0
+12,11,03:47,0.6,10:16,3.2,16:08,0.8,22:29,3.0
+13,11,04:25,0.7,10:55,3.1,16:48,0.9,23:08,2.9
+14,11,05:02,0.7,11:34,3.0,17:30,0.9,23:48,2.8
+15,11,05:41,0.8,12:15,3.0,18:14,1.0,,
+16,11,00:29,2.8,06:22,0.9,12:59,2.9,19:01,1.0
+17,11,01:12,2.7,07:07,1.0,13:46,2.8,19:50,1.0
+18,11,01:59,2.7,07:58,1.1,14:36,2.8,20:41,1.0
+19,11,02:50,2.7,08:55,1.1,15:27,2.8,21:34,1.0
+20,11,03:46,2.7,09:55,1.1,16:19,2.8,22:27,0.9
+21,11,04:45,2.7,10:53,1.0,17:12,2.9,23:21,0.8
+22,11,05:44,2.9,11:48,0.9,18:04,3.0,,
+23,11,00:14,0.7,06:40,3.0,12:41,0.8,18:57,3.1
+24,11,01:06,0.5,07:33,3.2,13:32,0.7,19:50,3.2
+25,11,01:58,0.4,08:25,3.3,14:24,0.6,20:44,3.3
+26,11,02:49,0.3,09:15,3.5,15:16,0.5,21:38,3.3
+27,11,03:40,0.3,10:06,3.5,16:09,0.5,22:31,3.3
+28,11,04:31,0.3,10:58,3.5,17:04,0.5,23:25,3.3
+29,11,05:22,0.3,11:51,3.5,18:00,0.6,,
+30,11,00:19,3.2,06:16,0.5,12:46,3.4,18:58,0.6
+1,12,01:14,3.2,07:12,0.6,13:42,3.3,19:56,0.7
+2,12,02:11,3.1,08:12,0.7,14:39,3.2,20:54,0.7
+3,12,03:10,3.0,09:14,0.9,15:36,3.1,21:52,0.8
+4,12,04:11,2.9,10:17,0.9,16:32,3.0,22:48,0.8
+5,12,05:11,2.9,11:15,0.9,17:26,3.0,23:42,0.8
+6,12,06:08,3.0,12:08,0.9,18:19,2.9,,
+7,12,00:33,0.8,07:00,3.0,12:57,0.9,19:09,2.9
+8,12,01:20,0.8,07:48,3.1,13:42,0.9,19:57,2.9
+9,12,02:04,0.7,08:32,3.1,14:24,0.9,20:42,2.9
+10,12,02:45,0.7,09:14,3.1,15:05,0.9,21:25,2.9
+11,12,03:23,0.7,09:53,3.1,15:46,0.9,22:06,2.9
+12,12,04:00,0.7,10:32,3.1,16:26,0.9,22:45,2.9
+13,12,04:37,0.8,11:10,3.1,17:07,0.9,23:24,2.9
+14,12,05:15,0.8,11:49,3.0,17:48,0.9,,
+15,12,00:03,2.9,05:54,0.9,12:29,3.0,18:31,0.9
+16,12,00:42,2.8,06:36,0.9,13:11,3.0,19:15,0.9
+17,12,01:25,2.8,07:21,1.0,13:55,2.9,20:01,0.9
+18,12,02:11,2.8,08:13,1.0,14:42,2.9,20:51,0.9
+19,12,03:03,2.8,09:10,1.1,15:33,2.9,21:44,0.9
+20,12,04:03,2.8,10:11,1.0,16:28,2.9,22:42,0.8
+21,12,05:06,2.9,11:12,1.0,17:26,3.0,23:41,0.7
+22,12,06:09,3.0,12:11,0.9,18:26,3.1,,
+23,12,00:39,0.6,07:08,3.2,13:09,0.7,19:27,3.2
+24,12,01:36,0.4,08:04,3.4,14:05,0.6,20:26,3.3
+25,12,02:30,0.3,08:58,3.5,15:01,0.5,21:22,3.3
+26,12,03:23,0.3,09:50,3.6,15:56,0.5,22:17,3.4
+27,12,04:15,0.3,10:43,3.6,16:50,0.5,23:10,3.4
+28,12,05:07,0.3,11:35,3.6,17:45,0.5,,
+29,12,00:02,3.4,05:58,0.4,12:27,3.5,18:38,0.5
+30,12,00:54,3.3,06:51,0.6,13:19,3.4,19:31,0.6
+31,12,01:47,3.1,07:46,0.7,14:11,3.2,20:24,0.7`;
+
+// ─── Parse LINZ CSV into tide events ─────────────────────────────────────────
+// Each row: day,month,t1,h1,t2,h2,t3,h3,t4,h4
+// Heights >1.5m = HIGH, <=1.5m = LOW (Auckland range ~0.4–3.6m)
+// Daylight saving: last Sun Oct → first Sun Apr (approx)
+function isDST(date) {
+  // NZ DST: last Sunday in September to first Sunday in April
+  const y = date.getFullYear();
+  // Start: last Sunday of September
+  const octStart = new Date(y, 8, 30); // Sep 30
+  while (octStart.getDay() !== 0) octStart.setDate(octStart.getDate() - 1);
+  // End: first Sunday of April
+  const aprEnd = new Date(y, 3, 7); // Apr 7
+  while (aprEnd.getDay() !== 0) aprEnd.setDate(aprEnd.getDate() - 1);
+  return date >= octStart || date < aprEnd;
+}
+
+function parseLINZ() {
+  const tides = [];
+  const lines = LINZ_RAW.trim().split('\n');
+  for (const line of lines) {
+    const parts = line.trim().split(',');
+    if (parts.length < 4) continue;
+    const day = parseInt(parts[0]);
+    const month = parseInt(parts[1]) - 1; // 0-indexed
+    const year = 2026;
+    // Up to 4 tide events per row
+    for (let i = 0; i < 4; i++) {
+      const tStr = parts[2 + i * 2];
+      const hStr = parts[3 + i * 2];
+      if (!tStr || !tStr.includes(':') || !hStr) continue;
+      const [hh, mm] = tStr.split(':').map(Number);
+      const height = parseFloat(hStr);
+      if (isNaN(height) || isNaN(hh)) continue;
+      // Build local date — LINZ times are already in NZDT/NZST local time
+      // We store as a UTC timestamp adjusted so new Date() shows correct local
+      const localDate = new Date(year, month, day, hh, mm, 0);
+      tides.push({
+        time: localDate,
+        height,
+        type: height > 1.5 ? 'high' : 'low'
+      });
+    }
+  }
+  // Sort by time
+  tides.sort((a, b) => a.time - b.time);
+  return tides;
+}
+
+const ALL_TIDES = parseLINZ();
+
+// ─── Interpolate current tide height from LINZ data ──────────────────────────
+// Uses cosine interpolation between the two surrounding tide events
+function getCurrentHeight(now) {
+  const ms = now.getTime();
+  let before = null, after = null;
+  for (const t of ALL_TIDES) {
+    if (t.time.getTime() <= ms) before = t;
+    else if (!after) after = t;
+  }
+  if (!before || !after) return null;
+  const span = after.time - before.time;
+  const elapsed = ms - before.time;
+  const frac = elapsed / span;
+  // Cosine interpolation
+  const cos = (1 - Math.cos(frac * Math.PI)) / 2;
+  return (before.height + (after.height - before.height) * cos).toFixed(2);
+}
+function getMoonPhase(date) {
+  const known = new Date('2000-01-06T18:14:00Z');
+  const cycle = 29.53058867;
+  const diff = (date - known) / (1000 * 60 * 60 * 24);
+  const phase = ((diff % cycle) + cycle) % cycle;
+  const frac = phase / cycle;
+
+  if (frac < 0.025 || frac > 0.975) return { icon: '🌑', name: 'New Moon' };
+  if (frac < 0.25) return { icon: '🌒', name: 'Waxing Crescent' };
+  if (frac < 0.275) return { icon: '🌓', name: 'First Quarter' };
+  if (frac < 0.475) return { icon: '🌔', name: 'Waxing Gibbous' };
+  if (frac < 0.525) return { icon: '🌕', name: 'Full Moon' };
+  if (frac < 0.725) return { icon: '🌖', name: 'Waning Gibbous' };
+  if (frac < 0.775) return { icon: '🌗', name: 'Last Quarter' };
+  return { icon: '🌘', name: 'Waning Crescent' };
+}
+
+// ─── Format helpers ───────────────────────────────────────────────────────────
+function fmt12(d) {
+  let h = d.getHours(), m = d.getMinutes();
+  const ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return `${h}:${m.toString().padStart(2,'0')}${ampm}`;
+}
+
+function fmtDate(d) {
+  return d.toLocaleDateString('en-NZ', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+// ─── Draw tide curve SVG from LINZ data ──────────────────────────────────────
+function drawTideCurve(now) {
+  const svg = document.getElementById('tideSvg');
+  const W = 332, H = 90;
+  const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(todayStart.getTime() + 24 * 3600000);
+  const totalMs = todayEnd - todayStart;
+
+  // Get tide events that bracket today (include ±1 event for smooth curve)
+  const relevant = ALL_TIDES.filter(t =>
+    t.time >= new Date(todayStart.getTime() - 8 * 3600000) &&
+    t.time <= new Date(todayEnd.getTime() + 8 * 3600000)
+  );
+
+  if (relevant.length < 2) { svg.innerHTML = ''; return; }
+
+  // Sample curve by cosine-interpolating between LINZ events
+  const pts = [];
+  for (let m = 0; m <= 1440; m += 10) {
+    const d = new Date(todayStart.getTime() + m * 60000);
+    const ms = d.getTime();
+    let before = null, after = null;
+    for (const t of relevant) {
+      if (t.time.getTime() <= ms) before = t;
+      else if (!after) after = t;
+    }
+    if (!before || !after) continue;
+    const span = after.time - before.time;
+    const frac = (ms - before.time) / span;
+    const cos = (1 - Math.cos(frac * Math.PI)) / 2;
+    const h = before.height + (after.height - before.height) * cos;
+    const x = ((d - todayStart) / totalMs) * W;
+    pts.push([x, h]);
+  }
+
+  const heights = pts.map(p => p[1]);
+  const minH = Math.min(...heights);
+  const maxH = Math.max(...heights);
+  const range = maxH - minH || 1;
+  const toY = h => H - 8 - ((h - minH) / range) * (H - 20);
+  const nowX = ((now - todayStart) / totalMs) * W;
+  const nowH = parseFloat(getCurrentHeight(now) || 0);
+
+  let pathD = `M ${pts[0][0]},${toY(pts[0][1])}`;
+  for (let i = 1; i < pts.length; i++) {
+    const cpx = (pts[i-1][0] + pts[i][0]) / 2;
+    pathD += ` C ${cpx},${toY(pts[i-1][1])} ${cpx},${toY(pts[i][1])} ${pts[i][0]},${toY(pts[i][1])}`;
+  }
+  const fillD = pathD + ` L ${W},${H} L 0,${H} Z`;
+
+  // Today's LINZ events for markers
+  const todayEvents = ALL_TIDES.filter(t => t.time >= todayStart && t.time < todayEnd);
+
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#2d7dd2" stop-opacity="0.5"/>
+        <stop offset="100%" stop-color="#0a1628" stop-opacity="0.1"/>
+      </linearGradient>
+      <clipPath id="leftClip"><rect x="0" y="0" width="${nowX}" height="${H}"/></clipPath>
+    </defs>
+    <path d="${fillD}" fill="url(#waveGrad)"/>
+    <path d="${pathD}" fill="none" stroke="#2d7dd2" stroke-width="1.5" stroke-opacity="0.3"/>
+    <path d="${pathD}" fill="none" stroke="#7ec8e3" stroke-width="2" clip-path="url(#leftClip)"/>
+    ${todayEvents.map(e => {
+      const ex = ((e.time - todayStart) / totalMs) * W;
+      const ey = toY(e.height);
+      const isHigh = e.type === 'high';
+      const labelY = isHigh ? ey - 10 : ey + 16;
+      return `
+        <circle cx="${ex}" cy="${ey}" r="4" fill="${isHigh ? '#7ec8e3' : '#2d7dd2'}" stroke="rgba(10,22,40,0.8)" stroke-width="1.5"/>
+        <text x="${ex}" y="${labelY}" text-anchor="middle" font-family="Fira Code" font-size="8" fill="${isHigh ? '#7ec8e3' : '#7aaccf'}">${e.height.toFixed(1)}m</text>
+      `;
+    }).join('')}
+    <line x1="${nowX}" y1="0" x2="${nowX}" y2="${H}" stroke="#f5c842" stroke-width="1.5" stroke-dasharray="3,3" stroke-opacity="0.8"/>
+    <circle cx="${nowX}" cy="${toY(nowH)}" r="5" fill="#f5c842" stroke="rgba(10,22,40,0.8)" stroke-width="2"/>
+  `;
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function render() {
+  try {
+    const now = new Date();
+    const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(todayStart.getTime() + 86400000);
+
+    // Draw SVG
+    drawTideCurve(now);
+
+    // Current interpolated height
+    const currentHeight = getCurrentHeight(now);
+
+    // Today's tides
+    const todayTides = ALL_TIDES.filter(t => t.time >= todayStart && t.time < todayEnd);
+
+    // Next tide after now
+    const next = ALL_TIDES.find(t => t.time > now);
+
+    // Rising or falling: compare height 20min ahead vs now
+    const futureH = getCurrentHeight(new Date(now.getTime() + 20 * 60000));
+    const rising = futureH !== null && parseFloat(futureH) > parseFloat(currentHeight);
+
+    document.getElementById('tideStatus').textContent = rising ? 'Rising' : 'Falling';
+    document.getElementById('tideIcon').textContent = rising ? '📈' : '📉';
+    document.getElementById('tideHeight').textContent = currentHeight ? `${currentHeight}m above chart datum` : '';
+    document.getElementById('nextTime').textContent = next ? fmt12(next.time) : '--';
+    document.getElementById('nextType').textContent = next ? (next.type === 'high' ? 'HIGH TIDE' : 'LOW TIDE') : '';
+
+    // Tide list
+    const list = document.getElementById('tideList');
+    list.innerHTML = '';
+    todayTides.forEach(e => {
+      const isPast = e.time < now;
+      const isNext = next && e.time.getTime() === next.time.getTime();
+      const div = document.createElement('div');
+      div.className = `tide-item${isPast ? ' is-past' : ''}${isNext ? ' is-next' : ''}`;
+      div.innerHTML = `
+        <div class="tide-dot ${e.type === 'high' ? 'dot-high' : 'dot-low'}"></div>
+        <div class="tide-time">${fmt12(e.time)}</div>
+        <div class="tide-kind">${e.type} tide</div>
+        <div class="tide-height">${e.height.toFixed(1)}<span>m</span></div>
+      `;
+      list.appendChild(div);
+    });
+
+    // Moon
+    const moon = getMoonPhase(now);
+    document.getElementById('moonIcon').textContent = moon.icon;
+    document.getElementById('moonPhase').textContent = moon.name;
+    document.getElementById('updatedAt').textContent = `LINZ · ${fmt12(now)}`;
+  } catch (err) {
+    console.error('Render error:', err);
+  } finally {
+    document.getElementById('loading').classList.add('hidden');
+  }
+}
+
+// ─── Clock ────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = fmt12(now).toUpperCase();
+  document.getElementById('dateDisplay').textContent = fmtDate(now).toUpperCase();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+updateClock();
+setInterval(updateClock, 10000);
+render();
+setInterval(render, 60 * 1000); // refresh every minute
+</script>
+</body>
+</html>
